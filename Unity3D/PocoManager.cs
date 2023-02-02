@@ -50,6 +50,8 @@ public class PocoManager : MonoBehaviour
         rpc.addRpcMethod("Dump", Dump);
         rpc.addRpcMethod("GetDebugProfilingData", GetDebugProfilingData);
         rpc.addRpcMethod("SetText", SetText);
+        rpc.addRpcMethod("AdjustCamera", AdjustCamera);
+        rpc.addRpcMethod("GetCameraAngleAndPosition", GetCameraAngleAndPosition);
 
         rpc.addRpcMethod("GetSDKVersion", GetSDKVersion);
 
@@ -180,6 +182,59 @@ public class PocoManager : MonoBehaviour
     private object GetSDKVersion(List<object> param)
     {
         return versionCode;
+    }
+
+    [RPC]
+    private object AdjustCamera(List<object> param)
+    {
+        Camera cam = Camera.main;
+        if (cam == null) return false;
+
+        if (param.Count > 0 && param[0] != null)
+        {
+            float[] angles = ((JArray)(param[0])).ToObject<float[]>();
+            if (angles.Length > 0)
+            {
+                cam.transform.rotation = Quaternion.Euler(angles[0], angles[1], angles[2]);
+            }
+        }
+
+        if (param.Count > 1 && param[1] != null)
+        {
+            float[] position = ((JArray)(param[1])).ToObject<float[]>();
+            if (position.Length > 0)
+            {
+                cam.transform.position = new Vector3(position[0], position[1], position[2]);
+            }
+        }
+
+        return true;
+    }
+
+    [RPC]
+    private object GetCameraAngleAndPosition()
+    {
+        if (Camera.main == null || Camera.main.transform == null)
+        {
+            return [];
+        }
+        float[] cameraAngles = new float[3];
+        float[] cameraPosition = new float[3];
+        var ro = Camera.main.transform.rotation.eulerAngles;
+        if (ro != null)
+        {
+            cameraAngles[0] = ro.x;
+            cameraAngles[1] = ro.y;
+            cameraAngles[2] = ro.z;
+        }
+        var pos = Camera.main.transform.position;
+        if (pos != null)
+        {
+            cameraPosition[0] = pos.x;
+            cameraPosition[1] = pos.y;
+            cameraPosition[2] = pos.z;
+        }
+        return [cameraAngles, cameraPosition];
     }
 
     void Update()
